@@ -190,3 +190,7 @@ parse and optional parser parameters.
 One last thing. If you are wondering about the peculiar code style, it is an
 experiment in readability. Put a space between the function and the parameter
 list if you want to contribute.
+
+# License
+
+LGPL, see LICENSE.
