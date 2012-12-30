@@ -27,17 +27,19 @@ Example templates.
 
 Loops:
 
-    Characters:\n#{for i, guy in protagonists
-    #{ #{= i as plain}. #{= guy as plain}\n} }
+    Characters:
+    #{for i, guy in protagonists
+    #{ #{= i as plain}. #{= guy as plain}
+    } }
 
     {
       protagonists: ['Blondie', 'Angel', 'Tuco']
     }
 
     Characters:
-    0. Blondie
-    1. Angel
-    2. Tuco
+     0. Blondie
+     1. Angel
+     2. Tuco
 
 
 # Manual
