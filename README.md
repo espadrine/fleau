@@ -1,4 +1,4 @@
-# Fléau
+# Fléau [![Build Status](https://travis-ci.org/espadrine/fleau.png)](http://travis-ci.org/espadrine/fleau)
 
 *An extensible, readable, streamed, safe templating language.*
 
