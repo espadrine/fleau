@@ -4,7 +4,7 @@
 
 
 test:
-	node test/test-plate.js
+	node test/test-fleau.js
 
 .PHONY: test
 
