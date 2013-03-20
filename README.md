@@ -107,8 +107,10 @@ Conditions: the `if` macro.
 Loops: the `for` macro. You have two forms: with the index, and without.
 We have already seen with the index in the intro.
 
-    Characters:\n#{for guy in protagonists
-    #{- #{= guy as plain}\n} }
+    Characters:
+    #{for guy in protagonists
+    #{- #{= guy as plain}
+    } }
 
     {
       protagonists: ['Blondie', 'Angel', 'Tuco']
