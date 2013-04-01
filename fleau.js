@@ -228,14 +228,15 @@ function resetEnv() {
 // Evaluate code as a String (`source`) without letting global variables get
 // used or modified. The `sandbox` is an object containing variables we want to
 // pass in.
-function leaklessEval(source, sandbox) {
+function leaklessEval(source, sandbox, sandboxName) {
   sandbox = sandbox || Object.create(null);
+  sandboxName = sandboxName || '$sandbox$';
   var sandboxed = 'var ';
   for (var field in sandbox) {
-    sandboxed += field + " = sandbox['" + field + "'],";
+    sandboxed += field + ' = ' + sandboxName + '["' + field + '"],';
   }
   sandboxed += 'undefined;';
-  var ret = Function('sandbox', resetEnv() + sandboxed + source)
+  var ret = Function(sandboxName, resetEnv() + sandboxed + source)
     .bind(Object.create(null))(sandbox);
   return ret;
 }
@@ -250,7 +251,7 @@ function evValue (literal, strval) {
       return literal[strval];
     } else {
       // Putting literal in the current scope.  Ugly as hell.
-      return leaklessEval (strval, literal);
+      return leaklessEval (strval, literal, 'literal');
     }
   } catch(e) {
     throw Error ('Template error: literal ' + JSON.stringify (strval) +
