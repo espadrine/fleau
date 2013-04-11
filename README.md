@@ -29,7 +29,7 @@ Loops:
 
     Characters:
     #{for i, guy in protagonists
-    #{ #{= i as plain}. #{= guy as plain}
+    #{ #{= i in plain}. #{= guy in plain}
     } }
 
     {
@@ -84,14 +84,14 @@ The following are built-in macros.
 
 The `=` macro displays an expression and escapes it using a parser.
 
-    Here be dragons: #{= data as #{json 2} }.
+    Here be dragons: #{= data in #{json 2} }.
 
     { data: ['T-O Psalter world map', 'Borgia map', 'Fra Mauro Map'] }
 
     Here be dragons: ['T-O Psalter world map', 'Borgia map', 'Fra Mauro Map'].
 
 You can have parameters to parsers (more below), and you can also chain them
-using a sequence of `as parser` instructions.
+using a sequence of `in parser` instructions.
 
 Conditions: the `if` macro.
 
@@ -109,7 +109,7 @@ We have already seen with the index in the intro.
 
     Characters:
     #{for guy in protagonists
-    #{- #{= guy as plain}
+    #{- #{= guy in plain}
     } }
 
     {

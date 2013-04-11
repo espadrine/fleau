@@ -266,7 +266,7 @@ var macros = {
     // Displaying a variable.
     var parsedtext = evValue (literal, params[0]);
     var parsercalls = params.slice (1)
-                            .filter (function (a) {return a !== 'as';})
+                            .filter (function (a) {return a !== 'in';})
                             .map (function (c) {return c.split (whitespace);});
     var parserNames = parsercalls.map (function (el) {return el[0];});
     var parserNamesparams = parsercalls.map(function(el) {return el.slice(1);});
