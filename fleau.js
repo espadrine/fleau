@@ -2,6 +2,7 @@
 // Copyright © Thaddee Tyl. All rights reserved.
 // Code covered by the LGPL license.
 
+var localeval = require ('localeval');
 
 var options = {
   trigger: '#',  // Can be multiple characters. Can be silly.
@@ -205,42 +206,6 @@ function formatString (input, write, literal) {
   }
 };
 
-function resetEnv() {
-  var reset = 'var ';
-  if (Object.getOwnPropertyNames) {
-    var obj = this;
-    var globals;
-    while (obj !== null) {
-      globals = Object.getOwnPropertyNames(obj);
-      for (var i = 0; i < globals.length; i++) {
-        reset += globals[i] + ',';
-      }
-      obj = Object.getPrototypeOf(obj);
-    }
-  } else {
-    for (var sym in this) {
-      reset += globals[i] + ',';
-    }
-  }
-  reset += 'undefined;';
-  return reset;
-}
-// Evaluate code as a String (`source`) without letting global variables get
-// used or modified. The `sandbox` is an object containing variables we want to
-// pass in.
-function leaklessEval(source, sandbox, sandboxName) {
-  sandbox = sandbox || Object.create(null);
-  sandboxName = sandboxName || '$sandbox$';
-  var sandboxed = 'var ';
-  for (var field in sandbox) {
-    sandboxed += field + ' = ' + sandboxName + '["' + field + '"],';
-  }
-  sandboxed += 'undefined;';
-  var ret = Function(sandboxName, resetEnv() + sandboxed + source)
-    .bind(Object.create(null))(sandbox);
-  return ret;
-}
-
 // Helper function to parse simple expressions.
 // Can throw pretty easily if the template is too complex.
 // Also, using variables is a lot faster.
@@ -250,8 +215,8 @@ function evValue (literal, strval) {
     if (/^[a-zA-Z_\$]+$/.test(strval)) {
       return literal[strval];
     } else {
-      // Putting literal in the current scope.  Ugly as hell.
-      return leaklessEval (strval, literal, 'literal');
+      // Putting literal in the current scope.
+      return localeval (strval, literal);
     }
   } catch(e) {
     throw Error ('Template error: literal ' + JSON.stringify (strval) +

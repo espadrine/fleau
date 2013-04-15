@@ -16,7 +16,9 @@
   "scripts": {
     "test": "make test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "localeval": ">=13.04.14"
+  },
   "devDependencies": {},
   "optionalDependencies": {},
   "engines": {
