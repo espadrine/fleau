@@ -14,8 +14,8 @@ Import and use.
 
 Example templates.
 
-    Thaddee #{if #{apostles.indexOf(thaddee) != -1}
-              then was else wasn\'t} an apostle
+    Thaddee {{if {{apostles.indexOf(thaddee) != -1}}
+              then was else wasn\'t}} an apostle
 
     {
       thaddee:  'Thaddaeus',
@@ -28,18 +28,9 @@ Example templates.
 Loops:
 
     Characters:
-    #{for i, guy in protagonists
-    #{ #{= i in plain}. #{= guy in plain}
-    } }
-
-    Characters:
     {{for i, guy in protagonists
     {{ {{= i in plain}}. {{= guy in plain}}
     }} }}
-
-    Characters:
-    {{/for i, guy in protagonists}} {{= i in plain}}. {{= guy in plain}}
-    {{/}}
 
     {
       protagonists: ['Blondie', 'Angel', 'Tuco']
@@ -93,7 +84,7 @@ The following are built-in macros.
 
 The `=` macro displays an expression and escapes it using a parser.
 
-    Here be dragons: #{= data in #{json 2} }.
+    Here be dragons: {{= data in {{json 2}} }}.
 
     { data: ['T-O Psalter world map', 'Borgia map', 'Fra Mauro Map'] }
 
@@ -104,8 +95,8 @@ using a sequence of `in parser` instructions.
 
 Conditions: the `if` macro.
 
-    I am #{if here then #{here. Hello!} else if atWork then
-    #{at work…} else out.} Anyway, how do you do?
+    I am {{if here then {{here. Hello!}} else if atWork then
+    {{at work…}} else out.}} Anyway, how do you do?
 
     { here: false, atWork: true }
 
@@ -117,9 +108,9 @@ Loops: the `for` macro. You have two forms: with the index, and without.
 We have already seen with the index in the intro.
 
     Characters:
-    #{for guy in protagonists
-    #{- #{= guy in plain}
-    } }
+    {{for guy in protagonists
+    {{- {{= guy in plain}}
+    }} }}
 
     {
       protagonists: ['Blondie', 'Angel', 'Tuco']
@@ -133,7 +124,7 @@ We have already seen with the index in the intro.
 The comment macro, `#`, used if you want to disable a control zone without
 removing it.
 
-    Here be #{# nothing}
+    Here be {{# nothing}}
 
     {}
 
@@ -146,7 +137,7 @@ It feeds it three parameters, `write`, a function to which you can give the
 output, `literal`, the parameters given to the template, and `params`, the
 parameters given to the macro.
 
-    First param:#{! fp #{write (params[0])} } #{fp teh yep etc…}!
+    First param:{{! fp {{write (params[0])}} }} {{fp teh yep etc…}}!
 
     {}
 
