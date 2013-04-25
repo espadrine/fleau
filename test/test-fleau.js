@@ -32,21 +32,21 @@ function test (template, literal, expected, cb) {
 // test 1 - 1 level of indentation, escaped {{.
 
 test (
-  'There is #{{= much} #{= a_man in plain} can do.\n\n' +
-  '#{# {dummy braces test} }' +
-  '#{= us in html} we have many friends: \n' +
-  '#{for friend in friends #{there is #{= friend in plain}, } }…',
+  'There is {{[ much ]]}} {{= a_man in plain}} can do.\n\n' +
+  '{{# {dummy braces test} }}' +
+  '{{= us in html}} we have many friends: \n' +
+  '{{for friend in friends {{there is {{= friend in plain}}, }} }}…',
   {
     'a_man': 'Jan',
     us: 'My friend & I',
     friends: ['Thaddee', 'Serge', 'Marie']
   },
-  'There is #{= much} Jan can do.\n\n' +
+  'There is {{ much ]}} Jan can do.\n\n' +
   'My friend &amp; I we have many friends: \n' +
   'there is Thaddee, there is Serge, there is Marie, …');
 
 test (
-    'Trying to #{for word in sentence #{#{= word plain} } }',
+    'Trying to {{for word in sentence {{{{= word plain}} }} }}',
     {
       sentence: ['complete', 'the', 'sentence.']
     },
@@ -55,8 +55,8 @@ test (
 // test 2 - 2 levels of indentation.
 
 test (
-  'Your base belongs to #{for me in us #{\n' +
-  '- #{for name in me #{#{= name in plain} } };} }',
+  'Your base belongs to {{for me in us {{\n' +
+  '- {{for name in me {{{{= name in plain}} }} }};}} }}',
   {
     us: [['John', 'Connor'], ['Paul', 'Irish'], ['Ash', 'Williams']]
   },
@@ -64,8 +64,8 @@ test (
   '- Ash Williams ;');
 
 test (
-  'Characters:\n#{for i, guy in protagonists #{' +
-  '#{= i in plain}. #{= guy in plain}\n} }',
+  'Characters:\n{{for i, guy in protagonists {{' +
+  '{{= i in plain}}. {{= guy in plain}}\n}} }}',
   {
     protagonists:['Blondie', 'Angel', 'Tuco']
   },
@@ -73,7 +73,7 @@ test (
 
 // compound expressions
 test (
-  'Thaddee #{if #{apostles.indexOf(thaddee) != -1} then was else wasn\'t} ' +
+  'Thaddee {{if {{apostles.indexOf(thaddee) != -1}} then was else wasn\'t}} ' +
   'an apostle',
   {
     thaddee: 'Thaddaeus',
@@ -84,66 +84,66 @@ test (
 
 // conditional macro tests.
 test (
-  '#{if present then #{I am here. Hello! } }Anyway, how do you do?',
+  '{{if present then {{I am here. Hello! }} }}Anyway, how do you do?',
   { present: true },
  'I am here. Hello! Anyway, how do you do?');
 
 test (
-  'I am #{if present then #{here. Hello!} else out.} Anyway, how do you do?',
+  'I am {{if present then {{here. Hello!}} else out.}} Anyway, how do you do?',
   { present: false },
   'I am out. Anyway, how do you do?');
 
 test (
-  'I am #{if here then #{here. Hello!} else ' +
-  'if atWork then #{at work…} else out.} Anyway, how do you do?',
+  'I am {{if here then {{here. Hello!}} else ' +
+  'if atWork then {{at work…}} else out.}} Anyway, how do you do?',
   { here: false, atWork: true },
   'I am at work… Anyway, how do you do?');
 
 // comment macro test.
 test (
-  'There should be#{# nothing!}…',
+  'There should be{{# nothing!}}…',
   {},
   'There should be…');
 
 // macro macro test.
 test (
-  'First param:#{! fp #{write (params[0])} } #{fp teh yep etc…}!',
+  'First param:{{! fp {{write (params[0])}} }} {{fp teh yep etc…}}!',
   {},
   'First param: teh!');
 
 // parser tests.
-test ('Plain #{= data in plain}.', {data:'text'}, 'Plain text.');
-test ('Escaping #{= data in plain}', {data:'#{= data in plain}'},
-      'Escaping #{= data in plain}');
-test ('Html #{= data in html}.', {data:'<text & stuff>'},
+test ('Plain {{= data in plain}}.', {data:'text'}, 'Plain text.');
+test ('Escaping {{= data in plain}}', {data:'{{= data in plain}}'},
+      'Escaping {{= data in plain}}');
+test ('Html {{= data in html}}.', {data:'<text & stuff>'},
       'Html &lt;text &amp; stuff&gt;.');
-test ('Xml #{= data in xml}.', {data:'<text & stuff>'},
+test ('Xml {{= data in xml}}.', {data:'<text & stuff>'},
       'Xml &lt;text &amp; stuff&gt;.');
-test ('XmlAttr #{= data in xmlattr}.', {data:'<\'text\' & "stuff">'},
+test ('XmlAttr {{= data in xmlattr}}.', {data:'<\'text\' & "stuff">'},
       'XmlAttr &lt;&apos;text&apos; &amp; &quot;stuff&quot;&gt;.');
-test ('JsonString "#{= data in jsonstring}"',
+test ('JsonString "{{= data in jsonstring}}"',
       { data:'file "foo\\bar":\tok\nBody:\r\fdel=\b' },
       'JsonString "file \\"foo\\\\bar\\":\\tok\\nBody:\\r\\fdel=\\b"');
-test ('Json "#{= data in json}"',
+test ('Json "{{= data in json}}"',
       { data:{"foo\\bar": "ok\nBody:\r\fdel=\b"} },
       'Json \"{\"foo\\\\bar\":\"ok\\nBody:\\r\\fdel=\\b\"}\"');
-test ('Json "#{= data in #{json 2} }"',
+test ('Json "{{= data in {{json 2}} }}"',
       { data:{"foo\\bar": "ok\nBody:\r\fdel=\b"} },
       'Json \"{\n  \"foo\\\\bar\": \"ok\\nBody:\\r\\fdel=\\b\"\n}\"');
-test ('Uri #{= data in uri}.', {data:'conversion done'},
+test ('Uri {{= data in uri}}.', {data:'conversion done'},
       'Uri conversion%20done.');
-test ('Non-Uri #{= data in !uri}.', { data:'conversion%20done' },
+test ('Non-Uri {{= data in !uri}}.', { data:'conversion%20done' },
       'Non-Uri conversion done.');
-test ('Int #{= data in integer}.', {data:73.6}, 'Int 74.');
-test ('Radix #{= data in #{intradix 2} }.', {data:2}, 'Radix 10.');
-test ('Float #{= data in #{float 2} }.', {data:73.6}, 'Float 73.60.');
-test ('Exp #{= data in #{exp 2} }.', {data:73.6}, 'Exp 7.36e+1.');
+test ('Int {{= data in integer}}.', {data:73.6}, 'Int 74.');
+test ('Radix {{= data in {{intradix 2}} }}.', {data:2}, 'Radix 10.');
+test ('Float {{= data in {{float 2}} }}.', {data:73.6}, 'Float 73.60.');
+test ('Exp {{= data in {{exp 2}} }}.', {data:73.6}, 'Exp 7.36e+1.');
 
-test ('Twice #{= data in uri in xmlattr}', {data:'\"&\"'},
+test ('Twice {{= data in uri in xmlattr}}', {data:'\"&\"'},
       'Twice %22&amp;%22');
 
 // error test.
-test ('Nonint #{= data in integer}.', {data:'hi'}, 'Nonint .');
+test ('Nonint {{= data in integer}}.', {data:'hi'}, 'Nonint .');
 
 // tl;dr.
 t.tldr ();

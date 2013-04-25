@@ -4,29 +4,17 @@
 
 var localeval = require ('localeval');
 
-var options = {
-  trigger: '#',  // Can be multiple characters. Can be silly.
-};
-
-// True if the text starts with the same characters as in pattern.
-function startswith (text, pattern, at) {
-  for (var i = 0; i < pattern.length; i++) {
-    if (text[at + i] !== pattern[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 function ControlZone () {
   this.from = 0;        // Index of starting character.
   this.to = 1;          // Index of character beyond the last.
-  this.escapes = [];    // List of indices that go by pairs.
+  this.escapes = [];    // List of indices that go by 3: (start, end, type).
+  // Types: '{{' 0, '}}' 1.
 }
 
 function TopLevel () {
   this.zone = null;     // List of ControlZone.
-  this.escapes = [];    // List of indices that go by pairs.
+  this.escapes = [];    // List of indices that go by 3: (start, end, type).
+  // Types: '{{' 0, '}}' 1.
 }
 
 // Return the boundaries of the next content to substitute,
@@ -34,61 +22,61 @@ function TopLevel () {
 // (index of substitution start) and (index of substitution stop + 1).
 function toplevel (text) {
   var state = 0;
-  var section = new TopLevel ();
   var bracecount = 0;
-  var skipTrigger = options.trigger.length;
+  var section = new TopLevel ();
   for (var i = 0;  i < text.length;  i++) {
     if (state === 0) {
       // Toplevel.
-      if (startswith (text, options.trigger, i)) {
-        // The trigger matches; we enter a control zone.
-        // We are at position i (where the start of the trigger is);
-        // we may have a { after the trigger.
-        // We must compensate for the i++ that occurs at the end of the loop.
-        i += skipTrigger - 1;
-        state = 1;
+      if (text[i] === '{' && text[i+1] && text[i+1] === '{') {
+        if (text[i+2] !== '[') {
+          // The trigger matches; we enter a control zone.
+          //
+          //   outer {{ control zone }} outer
+          //         ^-----------------^
+          section.zone = new ControlZone ();
+          section.zone.from = i;
+          state = 1;
+          i += 1;     // Counting the for loop, i will be just after the curly.
+        } else {
+          // This is an escape.
+          // {{[ needs to be converted to {{.
+          section.escapes.push (i, i + 3, 0);
+          i += 2;     // Counting the for loop, i will be just after the [.
+        }
+      } else if (text[i] === ']' && text[i+1] && text[i+1] === '}'
+          && text[i+2] && text[i+2] === '}') {
+        // This is an escape.
+        // ]}} needs to be converted to }}.
+        section.escapes.push (i, i + 3, 1);
+        i += 2;     // Counting the for loop, i will be just after the curly.
       }
     } else if (state === 1) {
-      // Toplevel, had a trigger.
-      if (text[i] === '{') {
-        if (text[i+1] && text[i+1] === '{') {
-          // This is an escape.
-          // #{{ needs to be converted to #{.
-          section.escapes.push (i - skipTrigger, i + 2);
-          i += 1;
-          state = 0;
-        } else {
-          // The control zone starts after this character.
-          section.zone = new ControlZone ();
-          section.zone.from = i - skipTrigger;
-          state = 2;
-        }
-      }
-    } else if (state === 2) {
       // Inside the control zone.
-      if (text[i] === '}') {
-        if (text[i+1] && text[i+1] == '}') {
-          // This is an escape.
-          // }} needs to be converted to }.
-          section.zone.escapes.push (i, i + 2);
-          i += 1;
-        } else if (bracecount > 0) {
-          // We are in a matched brace.
+      if (text[i] === '}' && text[i+1] && text[i+1] === '}') {
+        if (bracecount > 0) {
           bracecount -= 1;
+          i += 1;
         } else {
           // We leave the control zone.
-          section.zone.to = i + 1;
+          section.zone.to = i + 2;
           return section;
         }
-      } else if (text[i] === '{') {
-        if (text[i+1] && text[i+1] === '{') {
-          // This is an escape.
-          // {{ needs to be converted to {.
-          section.zone.escapes.push (i, i + 2);
+      } else if (text[i] === ']' && text[i+1] && text[i+1] == '}'
+          && text[i+2] && text[i+2] === '}') {
+        // This is an escape.
+        // ]}} needs to be converted to }}.
+        section.zone.escapes.push (i, i + 3, 1);
+        i += 2;
+      } else if (text[i] === '{' && text[i+1] && text[i+1] == '{') {
+        // Opening a subsection.
+        if (text[i+2] && text[i+2] !== '[') {
+          bracecount += 1;
           i += 1;
         } else {
-          // We are starting a matched brace.
-          bracecount += 1;
+          // This is an escape.
+          // {{[ needs to be converted to {{.
+          section.zone.escapes.push (i, i + 3, 0);
+          i += 2;
         }
       }
     }
@@ -100,23 +88,15 @@ function toplevel (text) {
 // are indeed escaped.
 function escapeCurly (text, escapes) {
   var newText = text.slice (0, escapes[0]);
-  var cursor = escapes[1];
-  for (var i = 0; i < escapes.length; i += 2) {
+  for (var i = 0; i < escapes.length; i += 3) {
     var from = escapes[i];
     var to = escapes[i + 1];
+    var type = escapes[i + 2];
     // Which escape do we have here?
-    if (to - from === 2) {
-      if (text[from] === '{') {
-        newText += '{';
-      } else if (text[from] === '}') {
-        newText += '}';
-      }
-    } else {
-      // This is a #{{ → #{ escape.
-      newText += options.trigger + '{';
+    if (type === 0) {   newText += '{{';
+    } else {            newText += '}}';
     }
-    newText += text.slice (cursor, escapes[i+2]);
-    cursor = to;
+    newText += text.slice (to, escapes[i+3]);
   }
   return newText;
 }
@@ -137,8 +117,7 @@ function zoneParser (span) {
                                 .split (whitespace)
                                 .filter (nonEmpty));
     // Add the zone.
-    tokens.push (span.slice (zone.from + options.trigger.length + 1,
-                             zone.to - 1));
+    tokens.push (span.slice (zone.from + 2, zone.to - 2));
     // Prepare for next iteration.
     span = span.slice (zone.to);
     section = toplevel (span);
@@ -180,8 +159,7 @@ function format (input, output, literal, cb) {
 function formatString (input, write, literal) {
   var section = toplevel (input);
   if (section.zone !== null) {
-    var span = input.slice (section.zone.from + options.trigger.length + 1,
-                           section.zone.to - 1);
+    var span = input.slice (section.zone.from + 2, section.zone.to - 2);
     var params = zoneParser (span);    // Fragment the parameters.
     var macro = params[0];
   }
@@ -347,7 +325,6 @@ var parsers = {
 //
 
 module.exports = format;
-exports.options = options;
 exports.macros = macros;
 exports.parsers = parsers;
 exports.formatString = formatString;

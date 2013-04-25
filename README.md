@@ -32,6 +32,15 @@ Loops:
     #{ #{= i in plain}. #{= guy in plain}
     } }
 
+    Characters:
+    {{for i, guy in protagonists
+    {{ {{= i in plain}}. {{= guy in plain}}
+    }} }}
+
+    Characters:
+    {{/for i, guy in protagonists}} {{= i in plain}}. {{= guy in plain}}
+    {{/}}
+
     {
       protagonists: ['Blondie', 'Angel', 'Tuco']
     }
