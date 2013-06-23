@@ -6,11 +6,13 @@
 
 Import and use.
 
-    var fleau = require('fleau');
-    var fs = require('fs');
-    fleau(fs.createReadStream('./YourTemplateFile'),   // input
-          process.stdout,                              // output
-          {data: 'to use', "in": ['your', 'file']});   // data
+```javascript
+var fleau = require('fleau');
+var fs = require('fs');
+fleau(fs.createReadStream('./YourTemplateFile'),   // input
+      process.stdout,                              // output
+      {data: 'to use', "in": ['your', 'file']});   // data
+```
 
 Example templates.
 
@@ -48,10 +50,12 @@ Loops:
 
 The exported object is a function that takes four parameters:
 
-    fleau(inputStream,         // a template
-          outputStream,        // where to output the result
-          {data: 'to use'},    // parameters
-          function callback(error) {…});
+```javascript
+fleau(inputStream,         // a template
+      outputStream,        // where to output the result
+      {data: 'to use'},    // parameters
+      function callback(error) {…});
+```
 
 Each parameter is accessible as a variable in the template. More on that later.
 
