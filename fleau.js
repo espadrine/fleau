@@ -175,7 +175,7 @@ function formatString (input, write, literal) {
     macros[macro] (write, literal, params.slice (1));
   } catch (e) {
     throw Error ('Template error: macro "' + macro + '" didn\'t work.\n' +
-                 '"' + e.message + '"' +
+                 '"' + e.message + '" ' +
                  'Parameters given to macro:', params.slice (1) +
                  'Literal:', literal);
   }
