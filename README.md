@@ -126,13 +126,21 @@ We have already seen with the index in the intro.
 The comment macro, `#`, used if you want to disable a control zone without
 removing it.
 
-    Here be {{# nothing}}
+    Here be {{# catburger!}}
 
     {}
 
     Here be 
 
-Finally, the macro macro, `!`, which adds a macro on-the-fly.
+You can also extend the macro system with additional macros.
+For the purpose of the example, let's write the macro macro, `!`, which adds a
+macro on-the-fly.
+
+```javascript
+fleau.macros['!'] = function (write, literal, params) {
+  macros[params[0]] = Function ('write', 'literal', 'params', params[1]);
+};
+```
 It reads the first parameter of the macro as a new macro name, and the second
 parameter as the body of a function expression to which the macro will be bound.
 It feeds it three parameters, `write`, a function to which you can give the

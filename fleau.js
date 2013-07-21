@@ -266,10 +266,6 @@ var macros = {
     }
   },
   '#': function () {},  // Comment.
-  '!': function (write, literal, params) {
-    // Add a macro from inside a template.
-    macros[params[0]] = Function ('write','literal','params', params[1]);
-  },
 };
 
 var parsers = {

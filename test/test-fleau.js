@@ -105,12 +105,6 @@ test (
   {},
   'There should be…');
 
-// macro macro test.
-test (
-  'First param:{{! fp {{write (params[0])}} }} {{fp teh yep etc…}}!',
-  {},
-  'First param: teh!');
-
 // parser tests.
 test ('Plain {{= data in plain}}.', {data:'text'}, 'Plain text.');
 test ('Escaping {{= data in plain}}', {data:'{{= data in plain}}'},
