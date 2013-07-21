@@ -251,12 +251,12 @@ var macros = {
       // That symbol was actually the key.
       var keySymbol = valSymbol.slice (0, valSymbol.length - 1);
       valSymbol = params[1];
-      iterIndex = 3;
+      iterIndex = 3;  // We skip the "in". Again.
     }
     var iter = evValue (literal, params[iterIndex]);
     if (iter === undefined) {
-      throw Error ('Template error: literal ' + JSON.stringify (params[0]) +
-                   ' is missing.');
+      throw Error ('Template error: literal ' +
+          JSON.stringify (params[iterIndex]) + ' is missing.');
     }
     var newliteral = literal;
     for (var i in iter) {
@@ -327,7 +327,7 @@ var parsers = {
 //
 
 module.exports = format;
-exports.macros = macros;
-exports.parsers = parsers;
-exports.formatString = formatString;
-exports.eval = evValue;
+module.exports.macros = macros;
+module.exports.parsers = parsers;
+module.exports.formatString = formatString;
+module.exports.eval = evValue;
