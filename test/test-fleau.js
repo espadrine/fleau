@@ -89,6 +89,11 @@ test (
  'I am here. Hello! Anyway, how do you do?');
 
 test (
+  '{{if present then {{I am here. Hello! }} }}Anyway, how do you do?',
+  { present: false },
+ 'Anyway, how do you do?');
+
+test (
   'I am {{if present then {{here. Hello!}} else out.}} Anyway, how do you do?',
   { present: false },
   'I am out. Anyway, how do you do?');

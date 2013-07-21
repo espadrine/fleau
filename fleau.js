@@ -198,7 +198,7 @@ function evValue (literal, strval) {
     }
   } catch(e) {
     throw Error ('Template error: literal ' + JSON.stringify (strval) +
-                 ' is missing.\n', e);
+                 ' is missing.\n', e.message, '\n', e.stack);
     return '';
   }
   return strval;
@@ -225,9 +225,9 @@ var macros = {
   'if': function (write, literal, params) {
     // If / then [ / else ].
     var cindex = 0;   // Index of evaluated condition.
-    var result;
+    var result = '';
     while (true) {
-      if (evValue (literal, params[cindex])) {
+      if (evValue (literal, params[cindex]) === true) {
         // We skip "then", so the result is at index +2.
         result = params[cindex + 2];
         break;
@@ -239,7 +239,7 @@ var macros = {
           result = params[cindex + 4];
           break;
         }
-      }
+      } else break;
     }
     formatString (result, write, literal);
   },
