@@ -1,6 +1,6 @@
-var fleau = require ('../fleau'),
-    Test = require ('./test'),
-    Stream = require ('stream');
+var fleau = require ('../fleau');
+var Test = require ('./test');
+var Stream = require ('stream');
 
 
 
@@ -44,6 +44,13 @@ test (
   'There is {{ much ]}} Jan can do.\n\n' +
   'My friend &amp; I we have many friends: \n' +
   'there is Thaddee, there is Serge, there is Marie, …');
+
+console.log('test 2');
+test (
+  'Try having {{= back\\slash in plain}}.',
+  { 'back\\slash': 'a \\' },
+  'Try having a \\.');
+console.log('end of test 2');
 
 test (
     'Trying to {{for word in sentence {{{{= word plain}} }} }}',

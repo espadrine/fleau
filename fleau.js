@@ -190,7 +190,7 @@ function formatString (input, write, literal) {
 function evValue (literal, strval) {
   try {
     // Special-case faster, single variable access lookups.
-    if (/^[a-zA-Z_\$]+$/.test(strval)) {
+    if (literal[strval] !== undefined) {
       return literal[strval];
     } else {
       // Putting literal in the current scope.
