@@ -45,12 +45,10 @@ test (
   'My friend &amp; I we have many friends: \n' +
   'there is Thaddee, there is Serge, there is Marie, …');
 
-console.log('test 2');
 test (
-  'Try having {{= back\\slash in plain}}.',
+  'Try having {{= $_scope["back\\\\slash"] in plain}}.',
   { 'back\\slash': 'a \\' },
   'Try having a \\.');
-console.log('end of test 2');
 
 test (
     'Trying to {{for word in sentence {{{{= word plain}} }} }}',

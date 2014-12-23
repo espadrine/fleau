@@ -133,16 +133,15 @@ function zoneParser (span) {
 //
 // input and output are two streams, one readable, the other writable.
 
-function format (input, output, literal, cb) {
+var format = function(input, output, literal, cb) {
   var text = '';
   input.on ('data', function (data) {
     text += '' + data;   // Converting to UTF-8 string.
   });
   input.on ('end', function template () {
     try {
-      formatString (text, function write (text) {
-        output.write (text);
-      }, literal);
+      var write = function(data) { output.write(data); };
+      compiletofunction(text)(write, literal, parsers);
     } catch (e) {
       if (cb) { cb (e); }
     } finally {
@@ -156,116 +155,193 @@ function format (input, output, literal, cb) {
   });
 };
 
-function formatString (input, write, literal) {
-  var section = toplevel (input);
-  if (section.zone !== null) {
-    var span = input.slice (section.zone.from + 2, section.zone.to - 2);
-    var params = zoneParser (span);    // Fragment the parameters.
-    var macro = params[0];
-  }
-
-  // If the macro is invalid, print the zone directly.
-  if (!macro) {
-    write (escapeCurly (input, section.escapes));
-    return;
-  }
-
-  write (escapeCurly (input.slice (0, section.zone.from), section.escapes));
-  try {   // Call the macro.
-    macros[macro] (write, literal, params.slice (1));
-  } catch (e) {
-    throw Error ('Template error: macro "' + macro + '" didn\'t work.\n' +
-                 '"' + e.message + '" ' +
-                 'Parameters given to macro:', params.slice (1) +
-                 'Literal:', literal);
-  }
-  if (section.zone.to < input.length) {
-    formatString (input.slice (section.zone.to), write, literal);
-  }
+var compiletofunction = function(input) {
+  var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
+    'eval((' + literaltovar.toString() + ')($_scope));\n';
+  return Function('$_write', '$_scope', '$_parsers',
+      code + compile(input));
 };
 
-// Helper function to parse simple expressions.
-// Can throw pretty easily if the template is too complex.
-// Also, using variables is a lot faster.
-function evValue (literal, strval) {
-  try {
-    // Special-case faster, single variable access lookups.
-    if (literal[strval] !== undefined) {
-      return literal[strval];
-    } else {
-      // Putting literal in the current scope.
-      return localeval (strval, literal);
+// Takes a string template, returns the code as string of a function that
+// takes `write(data)` and `literal = {}`, and writes the cast, the result of
+// the template filled in with the data from the literal (a JSON-serializable
+// object).
+var compile = function(input) {
+  var code = '';
+
+  var unparsedInput = input;
+  var unparsedInputLength;
+  var output;
+
+  do {
+    var section = toplevel(unparsedInput);
+    unparsedInputLength = unparsedInput.length;
+    if (section.zone === null) {
+      output = unparsedInput;
+      code += '$_write('
+        + JSON.stringify(escapeCurly(output, section.escapes))
+        + ');\n';
+      break;
     }
-  } catch(e) {
-    throw Error ('Template error: literal ' + JSON.stringify (strval) +
-                 ' is missing.\n', e.message, '\n', e.stack);
-    return '';
+    var span = unparsedInput.slice(section.zone.from + 2, section.zone.to - 2);
+    var params = zoneParser(span);    // Fragment the parameters.
+    var macro = params[0];
+
+    output = unparsedInput.slice(0, section.zone.from);
+    code += '$_write('
+      + JSON.stringify(escapeCurly(output, section.escapes))
+      + ');\n';
+
+    // If the macro is invalid, print the zone directly.
+    if (!macro) {
+      output = unparsedInput.slice(section.zone.from, section.zone.to);
+      code += '$_write('
+        + JSON.stringify(escapeCurly(output, section.escapes))
+        + ');\n';
+      continue;
+    }
+
+    // Call the macro.
+    var errmsg = JSON.stringify([
+      'Template error: macro "MACRO" didn\'t work.',
+      'Parameters: PARAMS',
+      'Literal: LITERAL',
+      'Message: MESSAGE'
+    ].join('\n'))
+     .replace('MACRO', '" + ' + JSON.stringify(macro) + ' + "')
+     .replace('MESSAGE', '" + e.message + "')
+     .replace('PARAMS', '" + ' + JSON.stringify(params.slice(1)) + ' + "')
+     .replace('LITERAL', '" + JSON.stringify($_scope) + "');
+    var macrocode = macros[macro](params.slice(1));
+    code += [
+      'try {',
+      '  ' + macrocode,
+      '} catch(e) {',
+      '  throw Error (' + errmsg + ');',
+      '}'
+    ].join('\n');
+
+    unparsedInput = unparsedInput.slice(section.zone.to);
+  } while (section.zone.to < unparsedInputLength);
+
+  return code;
+};
+
+var literaltovar = function(literal) {
+  var code = 'var ';
+  var keys = Object.keys(literal);
+  for (var i = 0; i < keys.length; i++) {
+    if ($_isidentifier(keys[i])) {
+      code += keys[i] + ' = ' + JSON.stringify(literal[keys[i]]) + ', ';
+    }
   }
-  return strval;
+  code += 'undefined;';
+  return code;
+};
+
+var $_isidentifier = function(iden) {
+  return /^[$_A-Za-z][$_A-Za-z0-9]*$/.test(iden);
+};
+
+var identifierincrement = 0;
+var makeidentifier = function(name) {
+  return '$_' + name + (identifierincrement++);
 };
 
 var macros = {
-  '=': function (write, literal, params) {
+  '=': function(params) {
     // Displaying a variable.
-    var parsedtext = evValue (literal, params[0]);
-    var parsercalls = params.slice (1)
-                            .filter (function (a) {return a !== 'in';})
-                            .map (function (c) {return c.split (whitespace);});
-    var parserNames = parsercalls.map (function (el) {return el[0];});
-    var parserNamesparams = parsercalls.map(function(el) {return el.slice(1);});
-    for (var i = 0; i < parserNames.length; i++) {
-      if (parsers[parserNames[i]] === undefined) {
-        throw Error ('Template error: parser ' +
-                     parserNames[i] + ' is missing.');
-      }
-      parsedtext = parsers[parserNames[i]] (parsedtext, parserNamesparams[i]);
-    }
-    write (parsedtext);
+    var parsercalls = params.slice(1)
+                            .filter(function(a) {return a !== 'in';})
+                            .map(function(c) {return c.split (whitespace);});
+    var parsernames = parsercalls.map (function (el) {return el[0];});
+    var parserparams = parsercalls.map(function(el) {return el.slice(1);});
+    var fmtvar = params[0];
+    var fmtparsers = JSON.stringify(parsernames);
+    var fmtparams = JSON.stringify(parserparams);
+    var parsedtextsym = makeidentifier('parsedtext');
+    var parsernamessym = makeidentifier('parsernames');
+    var parserparamssym = makeidentifier('parserparams');
+    var isym = makeidentifier('i');
+    var code = [
+      'var ' + parsedtextsym + ' = (' + fmtvar + ');',
+      'var ' + parsernamessym + ' = ' + fmtparsers + ';',
+      'var ' + parserparamssym + ' = ' + fmtparams + ';',
+      'for (var ' + isym + ' = 0; ' + isym + ' < ' + parsernamessym + '.length; ' + isym + '++) {',
+      '  if ($_parsers[' + parsernamessym + '[' + isym + ']] === undefined) {',
+      '    throw Error("Template error: parser " +',
+      '                ' + parsernamessym + '[' + isym + '] + " is missing.");',
+      '  }',
+      '  ' + parsedtextsym + ' = $_parsers[' + parsernamessym + '[' + isym + ']](' + parsedtextsym + ', ' + parserparamssym + '[' + isym + ']);',
+      '}',
+      '$_write(""+' + parsedtextsym + ');',
+      ''].join('\n');
+    return code;
   },
-  'if': function (write, literal, params) {
+  'if': function (params) {
     // If / then [ / else ].
-    var cindex = 0;   // Index of evaluated condition.
-    var result = '';
+    var cindex = 0;
+    var code = '';
+
     while (true) {
-      if (evValue (literal, params[cindex]) === true) {
-        // We skip "then", so the result is at index +2.
-        result = params[cindex + 2];
-        break;
-      } else if (params[cindex + 4]) {
-        // We skip "else", so the result is at index +4.
+      var condition = params[cindex];
+      var output = params[cindex + 2];  // Skip "then".
+      var fmtoutput = compile(output);
+      code += [
+        'if (' + condition + ') {',
+        '  ' + fmtoutput,
+        '}',
+      ].join('\n');
+
+      if (params[cindex + 3] === 'else') {
         if (params[cindex + 4] === 'if') {
+          code += ' else ';
           cindex += 5;
         } else {
-          result = params[cindex + 4];
+          var fmtoutput = compile(params[cindex + 4]);
+          code += [
+            ' else {',
+            '  ' + fmtoutput,
+            '}',
+          ].join('\n');
           break;
         }
-      } else break;
+      } else { break; }
     }
-    formatString (result, write, literal);
+    return code;
   },
-  'for': function (write, literal, params) {
+  'for': function (params) {
     // Iterate through an object / an array / a string.
-    var iterIndex = 2;   // We skip the "in".
-    var valSymbol = params[0];
-    if (valSymbol[valSymbol.length - 1] === ',') {
+    // {{for key, value in array {{}} }}
+    var iterindex = 2;   // We skip the "in".
+    var valuesymbol = params[0];
+    if (valuesymbol[valuesymbol.length - 1] === ',') {
       // That symbol was actually the key.
-      var keySymbol = valSymbol.slice (0, valSymbol.length - 1);
-      valSymbol = params[1];
-      iterIndex = 3;  // We skip the "in". Again.
+      var keysymbol = valuesymbol.slice(0, valuesymbol.length - 1);
+      valuesymbol = params[1];
+      iterindex = 3;  // We skip the "in". Again.
     }
-    var iter = evValue (literal, params[iterIndex]);
-    if (iter === undefined) {
-      throw Error ('Template error: literal ' +
-          JSON.stringify (params[iterIndex]) + ' is missing.');
-    }
-    var newliteral = literal;
-    for (var i in iter) {
-      newliteral[keySymbol] = i;
-      newliteral[valSymbol] = iter[i];
-      formatString (params[iterIndex + 1], write, literal);
-    }
+
+    var code = '';
+    var fmtiter = params[iterindex];
+    var fmtkeysym = keysymbol? keysymbol: makeidentifier('iterablekey');
+    var fmtkeysymstr = JSON.stringify(fmtkeysym);
+    var fmtvaluesym = valuesymbol;
+    var fmtvaluesymstr = JSON.stringify(fmtvaluesym);
+    var fmtoutput = compile(params[iterindex + 1]);
+    var iterablesym = makeidentifier('iterable');
+    code += [
+      'var ' + iterablesym + ' = (' + fmtiter + ');',
+      'for (var ' + fmtkeysym + ' in ' + iterablesym + ') {',
+      '  var ' + fmtvaluesym + ' = ' + iterablesym + '[' + fmtkeysym + '];',
+      '  $_scope[' + fmtkeysymstr + '] = ' + fmtkeysym + ';',
+      '  $_scope[' + fmtvaluesymstr + '] = ' + fmtvaluesym + ';',
+      '  ' + fmtoutput,
+      '}',
+    ].join('\n');
+    return code;
   },
-  '#': function () {},  // Comment.
+  '#': function () {return '';},  // Comment.
 };
 
 var parsers = {
@@ -325,5 +401,5 @@ var parsers = {
 module.exports = format;
 module.exports.macros = macros;
 module.exports.parsers = parsers;
-module.exports.formatString = formatString;
-module.exports.eval = evValue;
+module.exports.compile = compile;
+module.exports.compiletofunction = compiletofunction;
