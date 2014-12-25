@@ -141,7 +141,7 @@ var format = function(input, output, literal, cb) {
   input.on ('end', function template () {
     try {
       var write = function(data) { output.write(data); };
-      compiletofunction(text)(write, literal, parsers);
+      compiletofunction(text)(write, literal);
     } catch (e) {
       if (cb) { cb (e); }
     } finally {
@@ -158,7 +158,14 @@ var format = function(input, output, literal, cb) {
 var compiletofunction = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
     'eval((' + literaltovar.toString() + ')($_scope));\n';
-  return Function('$_write', '$_scope', '$_parsers',
+  code += 'var $_parsers = {\n';
+  var parsernames = Object.keys(parsers);
+  for (var i = 0; i < parsernames.length; i++) {
+    code += '  ' + JSON.stringify(parsernames[i]) + ': ' +
+      parsers[parsernames[i]].toString() + ',\n';
+  };
+  code += '}\n';
+  return Function('$_write', '$_scope',
       code + compile(input));
 };
 
