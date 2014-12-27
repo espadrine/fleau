@@ -169,6 +169,28 @@ var compiletofunction = function(input) {
       code + compile(input));
 };
 
+var template = function(input) {
+  var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
+    'eval((' + literaltovar.toString() + ')($_scope));\n';
+  code += 'var $_parsers = {\n';
+  var parsernames = Object.keys(parsers);
+  for (var i = 0; i < parsernames.length; i++) {
+    code += '  ' + JSON.stringify(parsernames[i]) + ': ' +
+      parsers[parsernames[i]].toString() + ',\n';
+  };
+  code += '}\n';
+  code += 'var $_written = "";\n' +
+          'var $_write = function(data) { $_written += data; };\n';
+  code += compile(input);
+  code += '$_written\n';
+  return function($_write, $_scope, timeout) {
+    localeval(code, {$_scope: $_scope}, timeout || 1000, function(err, res) {
+      if (err != null) { console.error(err); $_write(''); return; }
+      $_write(res);
+    });
+  };
+};
+
 // Takes a string template, returns the code as string of a function that
 // takes `write(data)` and `literal = {}`, and writes the cast, the result of
 // the template filled in with the data from the literal (a JSON-serializable
@@ -410,3 +432,4 @@ module.exports.macros = macros;
 module.exports.parsers = parsers;
 module.exports.compile = compile;
 module.exports.compiletofunction = compiletofunction;
+module.exports.template = template;
