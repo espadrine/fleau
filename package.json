@@ -17,7 +17,7 @@
     "test": "make test"
   },
   "dependencies": {
-    "localeval": ">=13.04.14"
+    "localeval": "~15.2.3"
   },
   "devDependencies": {},
   "optionalDependencies": {},

@@ -135,13 +135,13 @@ function zoneParser (span) {
 
 var format = function(input, output, literal, cb) {
   var text = '';
-  input.on ('data', function (data) {
+  input.on ('data', function gatherer (data) {
     text += '' + data;   // Converting to UTF-8 string.
   });
-  input.on ('end', function template () {
+  input.on ('end', function writer () {
     try {
       var write = function(data) { output.write(data); };
-      compiletofunction(text)(write, literal);
+      template(text)(write, literal);
     } catch (e) {
       if (cb) { cb (e); }
     } finally {
@@ -155,7 +155,7 @@ var format = function(input, output, literal, cb) {
   });
 };
 
-var compiletofunction = function(input) {
+var template = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
     'eval((' + literaltovar.toString() + ')($_scope));\n';
   code += 'var $_parsers = {\n';
@@ -169,7 +169,8 @@ var compiletofunction = function(input) {
       code + compile(input));
 };
 
-var template = function(input) {
+// Like template, with a timeout and sandbox.
+var sandboxTemplate = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
     'eval((' + literaltovar.toString() + ')($_scope));\n';
   code += 'var $_parsers = {\n';
@@ -183,13 +184,20 @@ var template = function(input) {
           'var $_write = function(data) { $_written += data; };\n';
   code += compile(input);
   code += '$_written\n';
-  return function($_write, $_scope, timeout) {
+  return function($_write, $_scope, timeout, cb) {
     localeval(code, {$_scope: $_scope}, timeout || 1000, function(err, res) {
-      if (err != null) { console.error(err); $_write(''); return; }
+      if (err != null) {
+        console.error(err); $_write('');
+        if (cb) { cb(err); }
+        return;
+      }
       $_write(res);
+      if (cb) { cb(null); }
     });
   };
 };
+
+var clearChildren = function() { localeval.clear(); };
 
 // Takes a string template, returns the code as string of a function that
 // takes `write(data)` and `literal = {}`, and writes the cast, the result of
@@ -431,5 +439,6 @@ module.exports = format;
 module.exports.macros = macros;
 module.exports.parsers = parsers;
 module.exports.compile = compile;
-module.exports.compiletofunction = compiletofunction;
 module.exports.template = template;
+module.exports.sandboxTemplate = sandboxTemplate;
+module.exports.clear = clearChildren;
