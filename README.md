@@ -4,7 +4,9 @@
 
 # Taste
 
-Import and use.
+```bash
+npm install fleau
+```
 
 ```javascript
 var fleau = require('fleau');
@@ -61,20 +63,27 @@ Each parameter is accessible as a variable in the template. More on that later.
 
 This exported function also has a series of entries.
 
+- `fleau.template(string)` returns a function that takes a writer (a function
+  that takes a string) and a scope (a JSON object), and writes the result of
+  applying that scope to the template.
+  This lets you avoid re-compiling the template every time.
+- `fleau.sandboxTemplate(string)` returns a function that takes a writer
+  (a function that takes a string), a scope (a JSON object), a timeout in
+  milliseconds, and a callback that takes an error. It writes the result of
+  applying that scope to the template.
+- `fleau.clear()` destroys background processes if you used `sandboxTemplate`.
+- `fleau.parsers` is a map of all parser functions. Parsers are used in the `=`
+  macro. Each is a function from string to string.
 - `fleau.macros` is a map of all macro functions. A *macro* is what specifies
   what the control zone does (more on this below). This is exported for
-  extensibility purposes.
-- `fleau.parsers` is a map of all parser functions. Parsers are used in the `=`
-  macro (it prints data from the parameters).
-- `fleau.formatString(input :: String, write :: Function, literal :: Object)`
-  formats the `input` parameter as a template, using the `write` function to
-  write data to the output stream. The `literal` object is the `parameters`
-  passed to the function.
-  This function is exported for use in macros.
-- `fleau.eval(literal :: Object, expression :: String)` returns the value
-  corresponding to looking up (or evaluating) an expression in the context of
-  the literal object passed in as parameters to the template.
-  This function is exported for use in macros.
+  extensibility purposes. Each function takes a list of parameters and returns a
+  string containing JS code, where `$_parsers` is `fleau.parsers`, `$_write` is
+  a function outputting the string given as a parameter, and `$_scope` is a map
+  from all variables defined in the scope to their values. You may use
+  `fleau.compile` below.
+- `fleau.compile` takes a string template and returns the code as a string of
+  the contents of a function that uses `$_write`, `$_scope` and `$_parsers` as
+  seen previously.
 
 ## Macros
 
@@ -133,25 +142,27 @@ removing it.
     Here be 
 
 You can also extend the macro system with additional macros.
-For the purpose of the example, let's write the macro macro, `!`, which adds a
-macro on-the-fly.
+For the purpose of the example, let's write a macro that joins a list together.
 
-```javascript
-fleau.macros['!'] = function (write, literal, params) {
-  macros[params[0]] = Function ('write', 'literal', 'params', params[1]);
+```js
+fleau.macros['join'] = function(params) {
+  var list = params[0];
+  var sep = params[2];  // Leave a param for `with`
+  var code = '$_write($_scope[' + JSON.stringify(list) + ']' +
+    '.join(' + JSON.stringify(sep) + '));\n';
+  return code;
 };
 ```
-It reads the first parameter of the macro as a new macro name, and the second
-parameter as the body of a function expression to which the macro will be bound.
-It feeds it three parameters, `write`, a function to which you can give the
-output, `literal`, the parameters given to the template, and `params`, the
-parameters given to the macro.
 
-    First param:{{! fp {{write (params[0])}} }} {{fp teh catburger…}}!
+```fleau
+I love {{join kids with {{, }}}}.
+```
 
-    {}
+Assuming the scope contains `{kids: ['Jack', 'Hugh', 'Hector']}`:
 
-    First param: teh!
+```plain
+I love Jack, Hugh, Hector.
+```
 
 ## Parsers
 

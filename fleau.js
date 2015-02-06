@@ -199,10 +199,10 @@ var sandboxTemplate = function(input) {
 
 var clearChildren = function() { localeval.clear(); };
 
-// Takes a string template, returns the code as string of a function that
-// takes `write(data)` and `literal = {}`, and writes the cast, the result of
-// the template filled in with the data from the literal (a JSON-serializable
-// object).
+// Takes a string template, returns the code as string of the contents of a
+// function that takes `$_write(data)` and `$_scope = {}`, and writes the
+// cast, the result of the template filled in with the data from the literal
+// (a JSON-serializable object).
 var compile = function(input) {
   var code = '';
 
