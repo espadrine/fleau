@@ -146,6 +146,23 @@ test ('Exp {{= data in {{exp 2}} }}.', {data:73.6}, 'Exp 7.36e+1.');
 test ('http://example.net/{{= data in exp in uri}}', {data:1234},
       'http://example.net/1e%2B3');
 
+// Added parser test
+fleau.parsers['paren'] = function(s) { return '(' + s + ')'; };
+test ("It's a trap {{= data in paren}}", {data:'unfortunately'},
+      "It's a trap (unfortunately)");
+
+// Added macro test
+fleau.macros['join'] = function(params) {
+  var list = params[0];
+  var sep = params[2];  // Leave a param for `with`
+  var code = '$_write($_scope[' + JSON.stringify(list) + ']' +
+    '.join(' + JSON.stringify(sep) + '));\n';
+  return code;
+};
+
+test ("I love {{join kids with {{, }}}}.", {kids:['Jack', 'Hugh', 'Hector']},
+      "I love Jack, Hugh, Hector.");
+
 // error test.
 test ('Nonint {{= data in integer}}.', {data:'hi'}, 'Nonint .');
 
