@@ -166,6 +166,11 @@ test ("I love {{join kids with {{, }}}}.", {kids:['Jack', 'Hugh', 'Hector']},
 // error test.
 test ('Nonint {{= data in integer}}.', {data:'hi'}, 'Nonint .');
 
+// passing a function.
+function capitalize(s) { return s[0].toUpperCase() + s.slice(1); }
+test ('{{= capitalize(data) in plain}}.', {data:'hi',capitalize:capitalize},
+    'Hi.');
+
 // tl;dr.
 t.tldr ();
 

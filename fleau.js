@@ -269,7 +269,7 @@ var literaltovar = function(literal) {
   var keys = Object.keys(literal);
   for (var i = 0; i < keys.length; i++) {
     if ($_isidentifier(keys[i])) {
-      code += keys[i] + ' = ' + JSON.stringify(literal[keys[i]]) + ', ';
+      code += keys[i] + ' = $_scope[' + JSON.stringify(keys[i]) + '], ';
     }
   }
   code += 'undefined;';
