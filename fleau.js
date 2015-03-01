@@ -2,7 +2,7 @@
 // Copyright © Thaddee Tyl. All rights reserved.
 // Code covered by the LGPL license.
 
-var localeval = require ('localeval');
+var vm = require ('vm');
 
 function ControlZone () {
   this.from = 0;        // Index of starting character.
@@ -185,19 +185,23 @@ var sandboxTemplate = function(input) {
   code += compile(input);
   code += '$_written\n';
   return function($_write, $_scope, timeout, cb) {
-    localeval(code, {$_scope: $_scope}, timeout || 1000, function(err, res) {
-      if (err != null) {
-        console.error(err); $_write('');
-        if (cb) { cb(err); }
-        return;
-      }
-      $_write(res);
-      if (cb) { cb(null); }
-    });
+    var res;
+    try {
+      res = vm.runInNewContext(code, {$_scope: $_scope},
+          {timeout: timeout || 1000});
+    } catch(err) {
+      console.error(err); $_write('');
+      if (cb) { cb(err); }
+      return;
+    }
+    $_write(res);
+    if (cb) { cb(null); }
   };
 };
 
-var clearChildren = function() { localeval.clear(); };
+// This used to be useful for localeval. It might be useful in the future,
+// depending on the sandbox' implementation.
+var clearChildren = function() {};
 
 // Takes a string template, returns the code as string of the contents of a
 // function that takes `$_write(data)` and `$_scope = {}`, and writes the
