@@ -171,6 +171,13 @@ function capitalize(s) { return s[0].toUpperCase() + s.slice(1); }
 test ('{{= capitalize(data) in plain}}.', {data:'hi',capitalize:capitalize},
     'Hi.');
 
+// … with a sandbox.
+var f = fleau.sandboxTemplate('{{= players.length in plain}} players:{{for player in players {{\n- {{= capitalize(player) in plain}}}} }}\n')
+var cast = '';
+function write(s) { cast += '' + s; }
+f(write, {players:['zadig','hector'], capitalize:capitalize})
+t.eq (cast, '2 players:\n- Zadig\n- Hector\n');
+
 // tl;dr.
 t.tldr ();
 
