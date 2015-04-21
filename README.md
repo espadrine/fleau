@@ -55,7 +55,7 @@ The exported object is a function that takes four parameters:
 ```javascript
 fleau(inputStream,         // a template
       outputStream,        // where to output the result
-      {data: 'to use'},    // parameters
+      {data: 'to use'},    // data literal
       function callback(error) {…});
 ```
 
@@ -89,7 +89,7 @@ This exported function also has a series of entries.
 
 In a *control zone* (a zone in the template between `{{` and `}}`), you have a
 series of textual parameters, either delimited by whitespace, or by `{{…}}`.
-The first of those paramters selects a macro.
+The first of those parameters selects a macro.
 *Macros* contain instructions to output data in the template.
 The following are built-in macros.
 
@@ -163,6 +163,9 @@ Assuming the scope contains `{kids: ['Jack', 'Hugh', 'Hector']}`:
 ```plain
 I love Jack, Hugh, Hector.
 ```
+
+Macro parameters that accept keys from the literal can generally accept JS
+expressions, in which you can use the literal's keys as JS variables.
 
 ## Parsers
 
