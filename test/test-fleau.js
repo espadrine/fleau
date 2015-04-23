@@ -145,6 +145,7 @@ test ('Exp {{= data in {{exp 2}} }}.', {data:73.6}, 'Exp 7.36e+1.');
 
 test ('http://example.net/{{= data in exp in uri}}', {data:1234},
       'http://example.net/1e%2B3');
+test ('Default number {{= data in html}}', {data:7}, 'Default number 7');
 
 // Added parser test
 fleau.parsers['paren'] = function(s) { return '(' + s + ')'; };

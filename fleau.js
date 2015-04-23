@@ -386,37 +386,37 @@ var macros = {
 };
 
 var parsers = {
-  'plain': function (text) { return text; },
+  'plain': function (text) { return ""+text; },
   'html': function (text) {
-    return text.replace (/&/g,'&amp;').replace (/</g,'&lt;')
+    return (""+text).replace (/&/g,'&amp;').replace (/</g,'&lt;')
                .replace (/>/g,'&gt;');
   },
   'xml': function (text) {
-    return text.replace (/&/g,'&amp;').replace (/</g,'&lt;')
+    return (""+text).replace (/&/g,'&amp;').replace (/</g,'&lt;')
                .replace (/>/g,'&gt;');
   },
   'xmlattr': function (text) {
-    return text.replace (/&/g,'&amp;').replace (/</g,'&lt;')
+    return (""+text).replace (/&/g,'&amp;').replace (/</g,'&lt;')
                .replace (/>/g,'&gt;').replace (/'/g,'&apos;')
                .replace (/"/g,'&quot;');
   },
   'uri': function (text) {
     // RFC5987-compliant.
-    return encodeURIComponent (text).replace(/['()]/g, escape)
+    return encodeURIComponent(""+text).replace(/['()]/g, escape)
       .replace(/\*/g, '%2A').replace(/%(?:7C|60|5E)/g, unescape);
   },
   '!uri': function (text) {
-    return decodeURIComponent (text);
+    return decodeURIComponent(""+text);
   },
   'jsonstring': function (text) {
     // FIXME: does someone have an idea on how to handle unicode?
-    return text.replace (/\\/g,'\\\\').replace (/"/g,'\\"')
-               .replace (/\n/g,'\\n').replace (/\f/g,'\\f')
-               .replace (/\r/g,'\\r').replace (/\t/g,'\\t')
-               .replace (RegExp('\b','g'),'\\b');
+    return (""+text).replace (/\\/g,'\\\\').replace (/"/g,'\\"')
+      .replace (/\n/g,'\\n').replace (/\f/g,'\\f')
+      .replace (/\r/g,'\\r').replace (/\t/g,'\\t')
+      .replace (RegExp('\b','g'),'\\b');
   },
-  'json': function (text, indent) {
-    return JSON.stringify (text, null, +indent[0]);
+  'json': function (json, indent) {
+    return JSON.stringify(json, null, +indent[0]);
   },
   'integer': function (integer) {
     return typeof integer == 'number'? integer.toFixed (0): '';
