@@ -1,0 +1,57 @@
+<!doctype html><meta charset=utf-8><title>Try Fleau In Your Browser</title>
+<style>
+  .inputs{display:flex}
+  .inputs>.input{flex:auto;width:50%}
+  .error{color:red}
+  textarea{border:0;width:100%;height:4cm}
+</style>
+<script src=./browser-fleau.js></script>
+<section class=inputs>
+  <div class=input>
+    <textarea id=moldUI>
+Characters:
+{{for i, guy in protagonists
+{{ {{= i in plain}}. {{= guy in plain}}
+}} }}</textarea>
+    <p class=error id=moldErrUI></p>
+  </div>
+  <div class=input>
+    <textarea id=castUI>
+{ "protagonists": ["Blondie", "Angel", "Tuco"] }</textarea>
+    <p class=error id=castErrUI></p>
+  </div>
+</section>
+<button id=generateUI>Generate</button>
+<pre id=outputUI></pre>
+<script>
+var fleau = require('fleau')
+
+var showErr = function(msg, type) {
+  window[type + 'ErrUI'].textContent = msg
+}
+var clearErr = function() {
+  showErr('', 'mold')
+  showErr('', 'cast')
+}
+
+var generate = function() {
+  var mold = moldUI.value
+  try {
+    var cast = JSON.parse(castUI.value)
+  } catch(e) { showErr(e.message, 'cast'); return }
+  try {
+    var template = fleau.template(mold)
+  } catch(e) { showErr(e.message, 'mold'); return }
+  var output = ''
+  var writer = function(str) {
+    output += str
+    outputUI.textContent = output
+  }
+  try {
+    template(writer, cast)
+  } catch(e) { showErr(e.message, 'mold'); return }
+  clearErr()
+}
+generateUI.addEventListener('click', generate)
+addEventListener('DOMContentLoaded', generate)
+</script>
