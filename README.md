@@ -63,9 +63,10 @@ Each parameter is accessible as a variable in the template. More on that later.
 
 This exported function also has a series of entries.
 
-- `fleau.template(string)` returns a function that takes a writer (a function
-  that takes a string) and a scope (a JSON object), and writes the result of
-  applying that scope to the template.
+- `fleau.template(string)` returns a `function(writer, scope, end)` that takes a
+  writer (a function that takes a string) and a scope (a JSON object), and
+  writes the result of applying that scope to the template. `end()` is a
+  function called once the whole template is produced.
   This lets you avoid re-compiling the template every time.
 - `fleau.sandboxTemplate(string)` returns a function that takes a writer
   (a function that takes a string), a scope (a JSON object), a timeout in

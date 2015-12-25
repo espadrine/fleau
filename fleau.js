@@ -157,6 +157,8 @@ var format = function(input, output, literal, cb) {
 
 var template = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
+    // FIXME: could we remove that eval?
+    // By adding the scope as a parameter to this function, yes.
     'eval((' + literaltovar.toString() + ')($_scope));\n';
   code += 'var $_parsers = {\n';
   var parsernames = Object.keys(parsers);
@@ -165,13 +167,14 @@ var template = function(input) {
       parsers[parsernames[i]].toString() + ',\n';
   };
   code += '}\n';
-  return Function('$_write', '$_scope',
-      code + compile(input));
+  return Function('$_write', '$_scope', '$_end',
+      code + compile(input) + '\nif ($_end instanceof Function) {$_end();}');
 };
 
 // Like template, with a timeout and sandbox.
 var sandboxTemplate = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
+    // FIXME: could we remove that eval?
     'eval((' + literaltovar.toString() + ')($_scope));\n';
   code += 'var $_parsers = {\n';
   var parsernames = Object.keys(parsers);

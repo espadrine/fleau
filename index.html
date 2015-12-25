@@ -43,12 +43,10 @@ var generate = function() {
     var template = fleau.template(mold)
   } catch(e) { showErr(e.message, 'mold'); return }
   var output = ''
-  var writer = function(str) {
-    output += str
-    outputUI.textContent = output
-  }
+  var write = function(str) { output += str }
+  var print = function() { outputUI.textContent = output }
   try {
-    template(writer, cast)
+    template(write, cast, print)
   } catch(e) { showErr(e.message, 'mold'); return }
   clearErr()
 }

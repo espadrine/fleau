@@ -309,6 +309,7 @@ var format = function(input, output, literal, cb) {
 
 var template = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
+    // FIXME: could we remove that eval?
     'eval((' + literaltovar.toString() + ')($_scope));\n';
   code += 'var $_parsers = {\n';
   var parsernames = Object.keys(parsers);
@@ -317,13 +318,14 @@ var template = function(input) {
       parsers[parsernames[i]].toString() + ',\n';
   };
   code += '}\n';
-  return Function('$_write', '$_scope',
-      code + compile(input));
+  return Function('$_write', '$_scope', '$_end',
+      code + compile(input) + '\nif ($_end instanceof Function) {$_end();}');
 };
 
 // Like template, with a timeout and sandbox.
 var sandboxTemplate = function(input) {
   var code = 'var $_isidentifier = ' + $_isidentifier.toString() + ';\n' +
+    // FIXME: could we remove that eval?
     'eval((' + literaltovar.toString() + ')($_scope));\n';
   code += 'var $_parsers = {\n';
   var parsernames = Object.keys(parsers);
@@ -538,37 +540,37 @@ var macros = {
 };
 
 var parsers = {
-  'plain': function (text) { return text; },
+  'plain': function (text) { return ""+text; },
   'html': function (text) {
-    return text.replace (/&/g,'&amp;').replace (/</g,'&lt;')
+    return (""+text).replace (/&/g,'&amp;').replace (/</g,'&lt;')
                .replace (/>/g,'&gt;');
   },
   'xml': function (text) {
-    return text.replace (/&/g,'&amp;').replace (/</g,'&lt;')
+    return (""+text).replace (/&/g,'&amp;').replace (/</g,'&lt;')
                .replace (/>/g,'&gt;');
   },
   'xmlattr': function (text) {
-    return text.replace (/&/g,'&amp;').replace (/</g,'&lt;')
+    return (""+text).replace (/&/g,'&amp;').replace (/</g,'&lt;')
                .replace (/>/g,'&gt;').replace (/'/g,'&apos;')
                .replace (/"/g,'&quot;');
   },
   'uri': function (text) {
     // RFC5987-compliant.
-    return encodeURIComponent (text).replace(/['()]/g, escape)
+    return encodeURIComponent(""+text).replace(/['()]/g, escape)
       .replace(/\*/g, '%2A').replace(/%(?:7C|60|5E)/g, unescape);
   },
   '!uri': function (text) {
-    return decodeURIComponent (text);
+    return decodeURIComponent(""+text);
   },
   'jsonstring': function (text) {
     // FIXME: does someone have an idea on how to handle unicode?
-    return text.replace (/\\/g,'\\\\').replace (/"/g,'\\"')
-               .replace (/\n/g,'\\n').replace (/\f/g,'\\f')
-               .replace (/\r/g,'\\r').replace (/\t/g,'\\t')
-               .replace (RegExp('\b','g'),'\\b');
+    return (""+text).replace (/\\/g,'\\\\').replace (/"/g,'\\"')
+      .replace (/\n/g,'\\n').replace (/\f/g,'\\f')
+      .replace (/\r/g,'\\r').replace (/\t/g,'\\t')
+      .replace (RegExp('\b','g'),'\\b');
   },
-  'json': function (text, indent) {
-    return JSON.stringify (text, null, +indent[0]);
+  'json': function (json, indent) {
+    return JSON.stringify(json, null, +indent[0]);
   },
   'integer': function (integer) {
     return typeof integer == 'number'? integer.toFixed (0): '';

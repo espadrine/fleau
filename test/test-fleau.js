@@ -152,7 +152,7 @@ fleau.parsers['paren'] = function(s) { return '(' + s + ')'; };
 test ("It's a trap {{= data in paren}}", {data:'unfortunately'},
       "It's a trap (unfortunately)");
 
-// Added macro test
+// added macro test.
 fleau.macros['join'] = function(params) {
   var list = params[0];
   var sep = params[2];  // Leave a param for `with`
@@ -167,21 +167,29 @@ test ("I love {{join kids with {{, }}}}.", {kids:['Jack', 'Hugh', 'Hector']},
 // error test.
 test ('Nonint {{= data in integer}}.', {data:'hi'}, 'Nonint .');
 
+// .template()
+var f = fleau.template('{{= intro}}, {{= object}}');
+var cast = '';
+var endHasRun = false;
+function write(s) { cast += '' + s; }
+function templateEnd() { endHasRun = true; }
+f(write, {intro:'hello', object:'world'}, templateEnd);
+t.eq (cast, 'hello, world');
+t.eq (endHasRun, true);
+
 // passing a function.
 function capitalize(s) { return s[0].toUpperCase() + s.slice(1); }
 test ('{{= capitalize(data) in plain}}.', {data:'hi',capitalize:capitalize},
     'Hi.');
 
 // … with a sandbox.
-var f = fleau.sandboxTemplate('{{= players.length in plain}} players:{{for player in players {{\n- {{= capitalize(player) in plain}}}} }}\n')
+var f = fleau.sandboxTemplate('{{= players.length in plain}} players:{{for ' +
+  'player in players {{\n- {{= capitalize(player) in plain}}}} }}\n');
 var cast = '';
 function write(s) { cast += '' + s; }
 f(write, {players:['zadig','hector'], capitalize:capitalize})
 t.eq (cast, '2 players:\n- Zadig\n- Hector\n');
 
-// tl;dr.
-t.tldr ();
-
 // exit.
-t.exit();
-
+t.tldr ();
+t.exit ();
