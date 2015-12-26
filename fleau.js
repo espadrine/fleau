@@ -107,6 +107,7 @@ function nonEmpty (s) { return s.length > 0; }
 // Cuts a control zone into an Array of Strings.
 // We have three components: space-separated identifiers and text.
 function zoneParser (span) {
+  if (whitespace.test (span[0])) { return ["", span]; }
   var tokens = [];
   var sep = [];     // Separation indices.
   var section = toplevel (span);   // textual zones.
@@ -236,12 +237,19 @@ var compile = function(input) {
       + JSON.stringify(escapeCurly(output, section.escapes))
       + ');\n';
 
-    // If the macro is invalid, print the zone directly.
-    if (!macro) {
+    // If the macro is not present, print the zone directly.
+    if (macros[macro] === undefined) {
       output = unparsedInput.slice(section.zone.from, section.zone.to);
       code += '$_write('
         + JSON.stringify(escapeCurly(output, section.escapes))
         + ');\n';
+      unparsedInput = unparsedInput.slice(section.zone.to);
+      continue;
+    }
+    // If the macro is empty, this is code.
+    if (macro === "") {
+      code += params.slice(1).join('') + '\n';
+      unparsedInput = unparsedInput.slice(section.zone.to);
       continue;
     }
 
@@ -293,6 +301,9 @@ var makeidentifier = function(name) {
 };
 
 var macros = {
+  '': function(params) {
+    return params.join('');
+  },
   '=': function(params) {
     // Displaying a variable.
     var parsercalls = params.slice(1)
