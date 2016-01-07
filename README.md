@@ -45,6 +45,25 @@ Loops:
      1. Angel
      2. Tuco
 
+Whatever comes after `{{` is a macro. If there is no macro specified, it
+includes arbitrary JS, which gives a different style to the template
+language:
+
+    <table>
+      <tr>
+        <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th>
+        <th>Sat</th><th>Sun</th>
+      </tr>
+      {{ let days = daysForMonth(month) }}
+      {{ for (let i = 7, j = 0; i < days.length; i += 7) { }}
+        <tr>
+          {{ for (; j < i; j++) { }}
+            <td>{{= days[j] in html}}</td>
+          {{ } }}
+        </tr>
+      {{ } }}
+    </table>
+
 
 # Manual
 
