@@ -280,15 +280,17 @@ var compile = function(input) {
 };
 
 var literaltovar = function(literal) {
-  var code = 'var ';
-  var keys = Object.keys(literal);
-  for (var i = 0; i < keys.length; i++) {
-    if ($_isidentifier(keys[i])) {
-      code += keys[i] + ' = $_scope[' + JSON.stringify(keys[i]) + '], ';
+  if (literal != null) {
+    var code = 'var ';
+    var keys = Object.keys(literal);
+    for (var i = 0; i < keys.length; i++) {
+      if ($_isidentifier(keys[i])) {
+        code += keys[i] + ' = $_scope[' + JSON.stringify(keys[i]) + '], ';
+      }
     }
-  }
-  code += 'undefined;';
-  return code;
+    code += 'undefined;';
+    return code;
+  } else { return ''; }
 };
 
 var $_isidentifier = function(iden) {
