@@ -190,6 +190,9 @@ function write(s) { cast += '' + s; }
 f(write, {players:['zadig','hector'], capitalize:capitalize})
 t.eq (cast, '2 players:\n- Zadig\n- Hector\n');
 
+// null literal.
+test ('Hi.', null, 'Hi.');
+
 // exit.
 t.tldr ();
 t.exit ();
