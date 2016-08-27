@@ -45,9 +45,10 @@ Loops:
      1. Angel
      2. Tuco
 
-Whatever comes after `{{` is a macro. If there is no macro specified, it
-includes arbitrary JS, which gives a different style to the template
-language:
+Whatever comes directly after `{{` (without whitespace) is a macro. For
+instance, `for` and `=` are macros. (Go [here](#macros) for a full list.) If
+there is no macro specified, it includes arbitrary JS, which gives a different
+style to the template language:
 
     <table>
       <tr>
