@@ -3,6 +3,7 @@
 // Code covered by the LGPL license.
 
 var vm = require ('vm');
+var Readable = require('stream').Readable;
 
 function ControlZone () {
   this.from = 0;        // Index of starting character.
@@ -200,6 +201,51 @@ var sandboxTemplate = function(input) {
     }
     $_write(res);
     if (cb) { cb(null); }
+  };
+};
+
+// string is a template.
+// Return a function that takes a scope and returns a readable stream.
+var createTemplate = function(input) {
+  var code = 'var $_parsers = {\n';
+  var parsernames = Object.keys(parsers);
+  for (var i = 0; i < parsernames.length; i++) {
+    code += '  ' + JSON.stringify(parsernames[i]) + ': ' +
+      parsers[parsernames[i]].toString() + ',\n';
+  };
+  code += '}\n';
+  code += compile(input) + '\nif (typeof $_end === "function") {$_end();}';
+  var script = new vm.Script(code, {timeout: 4 * 60 * 1000});
+  return function(scope) {
+    var output = '';
+    var pipeOpen = false;
+    var ended = false;
+    var stream = new Readable({
+      encoding: 'utf8',
+      read: function() {
+        pipeOpen = true;
+        if (ended && output === '') {
+          pipeOpen = this.push(null);
+        } else if (output !== '') {
+          pipeOpen = this.push(output);
+          output = '';
+        }
+      },
+    });
+    scope.$_scope = scope;
+    scope.$_write = function(data) {
+      output += '' + data;
+      if (pipeOpen && output !== '') {
+        pipeOpen = stream.push(output);
+        output = '';
+      }
+    };
+    scope.$_end = function() {
+      ended = true;
+      if (pipeOpen) { stream.push(null); }
+    };
+    script.runInNewContext(scope)
+    return stream;
   };
 };
 
@@ -461,4 +507,5 @@ module.exports.parsers = parsers;
 module.exports.compile = compile;
 module.exports.template = template;
 module.exports.sandboxTemplate = sandboxTemplate;
+module.exports.create = createTemplate;
 module.exports.clear = clearChildren;

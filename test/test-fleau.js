@@ -190,9 +190,24 @@ function write(s) { cast += '' + s; }
 f(write, {players:['zadig','hector'], capitalize:capitalize})
 t.eq (cast, '2 players:\n- Zadig\n- Hector\n');
 
+// … with an event emitter.
+var f = fleau.create('{{= players.length in plain}} players:{{for ' +
+  'player in players {{\n- {{= capitalize(player) in plain}}}} }}\n');
+var cast = '';
+var stream = f({players:['zadig','hector'], capitalize:capitalize})
+stream.on('data', function(data) { cast += data; });
+var eventEmitterTest = new Promise(function(resolve, reject) {
+  stream.on('end', function() {
+    t.eq (cast, '2 players:\n- Zadig\n- Hector\n');
+    resolve();
+  });
+});
+
 // null literal.
 test ('Hi.', null, 'Hi.');
 
 // exit.
-t.tldr ();
-t.exit ();
+eventEmitterTest.then(function() {
+  t.tldr ();
+  t.exit ();
+});
