@@ -85,7 +85,7 @@ This exported function also has a series of entries.
 
 - `fleau.create(string)` returns a `function(scope)` that takes a JSON object,
   and returns a readable stream that is the result of applying that scope to the
-  template.
+  template. This function can throw, as well as the function it returns.
 - `fleau.template(string)` returns a `function(writer, scope, end)` that takes a
   writer (a function that takes a string) and a scope (a JSON object), and
   writes the result of applying that scope to the template. `end()` is a
