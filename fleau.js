@@ -216,7 +216,7 @@ var createTemplate = function(input) {
   code += '}\n';
   code += compile(input) + '\nif (typeof $_end === "function") {$_end();}';
   var script = new vm.Script(code, {timeout: 4 * 60 * 1000});
-  return function(scope) {
+  var runner = function(scope) {
     var output = '';
     var pipeOpen = false;
     var ended = false;
@@ -247,6 +247,8 @@ var createTemplate = function(input) {
     script.runInNewContext(scope)
     return stream;
   };
+  runner.code = code;
+  return runner;
 };
 
 // This used to be useful for localeval. It might be useful in the future,
@@ -309,12 +311,15 @@ var compile = function(input) {
      .replace('MACRO', '" + ' + JSON.stringify(macro) + ' + "')
      .replace('MESSAGE', '" + e.message + "')
      .replace('PARAMS', '" + ' + JSON.stringify(params.slice(1)) + ' + "')
-     .replace('LITERAL', '" + JSON.stringify($_scope) + "');
+     .replace('LITERAL', '" + $_scopestr + "');
     var macrocode = macros[macro](params.slice(1));
     code += [
       'try {',
       '  ' + macrocode,
       '} catch(e) {',
+      '  try {',
+      '    var $_scopestr = JSON.stringify($_scope);',
+      '  } catch(e) { var $_scopestr = Object.keys($_scope).join(" "); }',
       '  throw Error (' + errmsg + ');',
       '}'
     ].join('\n');
