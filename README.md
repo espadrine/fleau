@@ -211,7 +211,7 @@ expressions, in which you can use the literal's keys as JS variables.
 
 # Dev intro
 
-The entirety of the templating system is hold in the `fleau.js` code file. There
+The entirety of the templating system is held in the `fleau.js` code file. There
 are tests in the `test/` directory, which you run using `make test`.
 
 `fleau.js` starts with a series of helper functions which are really meant to
