@@ -208,7 +208,7 @@ expressions, in which you can use the literal's keys as JS variables.
   comma as given as a parameter.
 - `exp`: outputs a number in scientific notation, using the number of digits
   after the comma as given as a parameter.
-- `boolean`: escapes boolean values (such as True/False).
+- `boolean`: escapes boolean values (such as true/false).
 
 # Dev intro
 
