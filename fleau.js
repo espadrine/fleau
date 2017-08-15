@@ -499,6 +499,9 @@ var parsers = {
   'exp': function (exp, fractionDigits) {
     return typeof exp == 'number'?
         exp.toExponential (parseInt (fractionDigits[0])): '';
+  },
+  'boolean': function (text) {
+    return String(!!text);
   }
 };
 
