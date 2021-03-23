@@ -3,6 +3,7 @@
   "main": "fleau.js",
   "description": "An extensible, readable, streamed, safe templating language.",
   "author": "Thaddee Tyl <thaddee.tyl@gmail.com> (http://espadrine.github.com/)",
+  "license": "EUPL-1.2",
   "contributors": [
     "Thaddee Tyl <thaddee.tyl@gmail.com>",
     "Jan Keromnes <janx@linux.com>"
